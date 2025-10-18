@@ -20,7 +20,7 @@ It deploys:
 - **Azure Monitor** for metrics, alerts, autoscale, and log analytics  
 - **Azure Entra ID** (OAuth2) for authentication  
 
-This setup can be extended to multi-tenant “Grafana as a Service”.
+This setup can be extended to a multi-tenant “Grafana as a Service”.
 
 ---
 
@@ -79,8 +79,8 @@ Participants will:
 - Clone the repository.
 - Replace all instances of `clarusway.us` with **your own domain**.
 - Delete `.git` folder.
-- Push the repository to your Github.
-- Don't push any Entra ID or DB credentials to Github.
+- Push the repository to your GitHub.
+- Don't push any Entra ID or DB credentials to GitHub.
 
 ---
 
@@ -90,27 +90,27 @@ Before deploying VMs, databases, and Grafana, we first build the networking foun
 
 ### Create Resource Group
 - Create a **resource group** to contain all project resources (VNet, subnets, NSGs, NAT, Bastion, etc.).
-- Use meaningful naming (e.g. `grafana-rg`) to reflect purpose and lifecycle.
+- Use meaningful naming (e.g., `grafana-rg`) to reflect purpose and lifecycle.
 - Keep `East US` as the region. 
 - Click Create.
 
 ### Provision Virtual Network (VNet) and Bastion
 - Select the related subscription and the resource group.
 - **Virtual network name**: `grafana-vnet`.
-- Under **Security** tab, select `Enable Azure Bastion` option. That will create a Bastion Host with a public IP address.
-- Under IP Adresses tab, define an appropriate address space, keeping the default is ok (e.g. `10.0.0.0/16`).
+- Under the **Security** tab, select the `Enable Azure Bastion` option. That will create a Bastion Host with a public IP address.
+- Under the IP Addresses tab, define an appropriate address space, keeping the default is ok (e.g., `10.0.0.0/16`).
 - This VNet will host subnets such as application, database, bastion, etc.
 
 ### Network Security Groups (NSGs)
 
 - To enforce subnet-level security, define one NSG per subnet according to the information below.
-- First create the NSG. And then add inbound rules.
+- First, create the NSG. And then add inbound rules.
 
 #### Database Subnet NSG (`db-subnet-sg`)
 - **Purpose:** Enable access to PostgreSQL Flexible Server from VMs.  
 - **Rules:**
   - ✅ Allow inbound **5432 (PostgreSQL)** only from the IP range of `app-subnet` (10.0.2.0/24)
-    - Source: IP Adresses
+    - Source: IP Addresses
     - Source IP addresses/CIDR ranges: `10.0.2.0/24`
     - Source port ranges: *
     - Destination: Any
@@ -310,7 +310,7 @@ You now have:
 ---
 
 ### Configure Grafana to use PostgreSQL
-- Modify **cloud-init.yml** file `/etc/grafana/grafana.ini` block by adding the private IP of the PostgreSQL VM in place of `<db-vm-private-ip>`.
+- Modify the **cloud-init.yml** file `/etc/grafana/grafana.ini` block by adding the private IP of the PostgreSQL VM in place of `<db-vm-private-ip>`.
 
 ---
 
@@ -337,7 +337,7 @@ You now have:
   - **Availability zone**: `Zone 1`
   - **Orchestration mode**: `Flexible`
   - **Scaling**: Autoscaling
-    - Configure **Scaling** by editting default condition:
+    - Configure **Scaling** by editing the default condition:
       - Default instance count: 1
       - Minimum: `1`
       - Maximum: `3`
@@ -380,7 +380,7 @@ You now have:
 - VMSS will scale automatically based on workload.
 
 9. Test: Open `http://<grafana-agw-publicip>`
-10. (Optional) Login with the default credentials of the Grafana **username/password** `admin`.
+10. (Optional) Log in with the default credentials of the Grafana **username/password** `admin`.
 
 #### Troubleshooting
 - SSH into one of the VMs via Bastion Host.
@@ -391,8 +391,8 @@ sudo systemctl status nginx
 ```
 - Check the Nginx configuration `/etc/nginx/sites-available/grafana` on the VM.
 - Restart services in case of any configuration change.
-- Check the Grafana page is active by opening one of the VMs public ip on the browser use `http`
-- Check the Grafna page is active by opening AGW ip on the browser use `http`
+- Check the Grafana page is active by opening one of the VMs' public IP on the browser using `http`
+- Check the Grafna page is active by opening AGW IP on the browser using `http`
 
 ---
 
@@ -403,7 +403,7 @@ In this setup, the Application Gateway handles **HTTPS**, and your **Ubuntu VM (
 You’ll upload a single SSL certificate (Let’s Encrypt or any trusted CA) to the gateway — **no Certbot on each VM**.
 
 #### Create a domain name in AWS
-- Create an A record in your existing AWS Route 53 domain service for the **Application Gateway public IP** adres pointing to `grafana.clarusway.us`.
+- Create an A record in your existing AWS Route 53 domain service for the **Application Gateway public IP** address, pointing to `grafana.clarusway.us`.
 
 #### Obtain a Certificate
 You only need one certificate for your domain — not on every VM.
@@ -414,8 +414,8 @@ sudo apt install certbot -y
 sudo certbot certonly --manual --preferred-challenges dns -d grafana.clarusway.us
 ```
 
-- Follow the prompt, that will requiere a DNS Record creation. 
-- In the AWS Route 53 panel, create a DNS TXT record with name `_acme-challenge.grafana.clarusway.us` and the value as provided in the output of the command like `3QsE7WPsWdEB0G81Wq3zv9ykhQAyl2O_64`.
+- Follow the prompt, which will require a DNS Record creation.
+- In the AWS Route 53 panel, create a DNS TXT record with name `_acme-challenge.grafana.clarusway.us` and the value as provided in the output of the command, like `3QsE7WPsWWq3zv9ykhQAyl2O_64`.
 
 
 #### Convert Certificate to .pfx
@@ -427,18 +427,18 @@ sudo openssl pkcs12 -export \
   -inkey /etc/letsencrypt/live/grafana.clarusway.us/privkey.pem \
   -in /etc/letsencrypt/live/grafana.clarusway.us/fullchain.pem
 ```
-- Take note the export password you entered.
+- Take note of the export password you entered.
 
 ---
 
-#### Copy the certificate to the local if you created it in VM
-- First set the ownerships in the VM to get permission to use `scp`:
+#### Copy the certificate to the local if you created it in a VM
+- First, set the ownerships in the VM to get permission to use `scp`:
 ```sh
 sudo chown azureuser:azureuser /home/azureuser/grafana-cert.pfx
 sudo chmod 644 /home/azureuser/grafana-cert.pfx
 ```
 
-- Grab the certificate to the local:
+- Grab the certificate from the local:
 ```sh
 scp -i <your-ssh-key-file-name-here>.pem azureuser@<public-ip-of-the-VM>:/home/azureuser/grafana-cert.pfx .
 ```
@@ -496,7 +496,7 @@ X-Xss-Protection: 1; mode=block
   - Check the probe path and host, NSG/VM firewall (allow port 80, and 443), and that Nginx responds on port 80 (`curl -I http://<vm-private-ip>`).  
   - Ensure backend private IP in pool is correct.
 
-2. Open [grafana.clarusway.us](https://grafana.clarusway.us) in a browser and see the Grafan page is opening. Use the generic username: `admin` and the password `admin` to first login. Then change the password.
+2. Open [grafana.clarusway.us](https://grafana.clarusway.us) in a browser and see if the Grafana page opens. Use the generic username: `admin` and the password `admin` to first log in. Then change the password.
 
 ---
 
@@ -539,7 +539,7 @@ Connection: keep-alive
 Location: https://grafana.clarusway.us/
 ```
 
-- That confirms AGW redirecting the HTTP requests to HTTPS listener.
+- That confirms AGW is redirecting the HTTP requests to the HTTPS listener.
 
 ---
 
@@ -553,7 +553,7 @@ To secure Grafana with Azure Entra ID, follow these manual steps:
 1. In the Azure Portal, go to **Microsoft Entra ID** → **App registrations** → **New registration**.
 2. Set:
    - **Name**: `Grafana`
-   - **Supported account types**: `Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`. That option will enable us to login using non-Azure accounts also.
+   - **Supported account types**: `Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`. That option will also enable us to log in using non-Azure accounts.
    - **Redirect URI**: `Web` and `https://grafana.clarusway.us/login/azuread`
 3. Click **Register**.
 
@@ -576,7 +576,7 @@ From the app **Overview** page, note:
 
 ### Configure Grafana
 - Connect to the Grafana VM using Bastion.
-- On your Grafana VM(s), edit `/etc/grafana/grafana.ini`, remove comment out `;`s at the beginning of the lines belov to activate them, and add missing credentials:
+- On your Grafana VM(s), edit `/etc/grafana/grafana.ini`, remove the comment out `;`s at the beginning of the lines below to activate them, and add missing credentials:
 
 ```ini
 [auth.azuread]
@@ -598,27 +598,27 @@ sudo systemctl restart grafana-server
 
 ### Test
 - Navigate to [grafana.clarusway.us](https://grafana.clarusway.us).
-- Sign-out from the menu on the right-top if you already signed in.
+- Sign out from the menu on the right-top if you already signed in.
 - On the landing page, you should now see **Sign in with Azure AD** as a login option.
 
 #### Invite an External User in Entra ID
 1. Navigate to **Entra ID** --> **Users**.
 2. Click **New user** --> **Invite external user**
-3. Enter one of your gmail and display name as your name.
-4. Open your gmail and accept the invitation.
+3. Enter one of your Gmail accounts and display name as your name.
+4. Open your Gmail and accept the invitation.
 
-#### Access Grafana using gmail account
+#### Access Grafana using a Gmail account
 1. Navigate to [grafana.clarusway.us](https://grafana.clarusway.us) again.
 2. Click **Sign in with Microsoft** 
-3. Sign in with the Gmail account.
+3. Sign in with your Gmail account.
 
 ---
 
 ## 🛡️ Project Setup: Observability & Security (Optional)
 
-A critical part of the architecture is enabling **monitoring, diagnostics, and security logging** for visibility and protection. We don't want to be informed about incidents like a database outage or 502 error by our customers.
+A critical part of the architecture is enabling **monitoring, diagnostics, and security logging** for visibility and protection. We don't want to be informed about incidents like a database outage or a 502 error by our customers.
 
-### Enable VM Insights on the PostgeSQL VM
+### Enable VM Insights on the PostgreSQL VM
 
 - Navigate to **grafana-db-vm** page.
 - On the left side menu, **Monitoring** --> **Insights**: Click `Enable`
@@ -637,30 +637,30 @@ A critical part of the architecture is enabling **monitoring, diagnostics, and s
 
 ### Configure Alerts and Notifications
 - Navigate to **grafana-db-vm** page.
-- On the left side menu, **Monitoring** --> **Alerts**: Click `View + set up`. That menu provides commonly used alerts as template.
+- On the left side menu, **Monitoring** --> **Alerts**: Click `View + set up`. That menu provides commonly used alerts as a template.
 
 ![alert_rules](alert_rules.png)
 
-- Activate the rules that you want to use, example `Percentage CPU is greater than`.
+- Activate the rules that you want to use, for example, `Percentage CPU is greater than`.
 - Click `Save`
-- The page redirects to **Alerts** list.
+- The page redirects to the **Alerts** list.
 
 - To create a new alert, click **Create** --> **Alert rule**
 - **Condition** --> **Signal name**: `OS Disk IOPS Consumed Percentage`. Keep the popular configuration.
 - **Actions** --> **Select actions**: `Use quick actions`
   - **Action group name**: `grafana-email-action`
   - **Display name** `email-action`
-  - Keep default email action.
+  - Keep the default email action.
   - Save.
 - **Details** --> **Alert rule name**: `OS Disk IOPS Consumed Percentage is Greater than %95`
 - Review and create.
 
 #### Test Alert
-- Install stress tool and use it to increase CPU more than %80.
+- Install stress tool and use it to increase CPU by more than 80%.
 ```sh
 sudo apt update
 sudo apt install stress-ng -y
-# Run a test to stress all CPU cores; until %60 CPU
+# Run a test to stress all CPU cores, until 60% CPU
 stress-ng --cpu $(nproc) --timeout 60s
 # more than %90
 stress-ng --cpu $(nproc) --cpu-method matrixprod --timeout 60s
@@ -722,7 +722,7 @@ Heartbeat
 ```
 - Your VM should appear, meaning it’s connected.
 
-- And verify that you can see the syslogs from the vm:
+- And verify that you can see the syslogs from the VM:
 ```kql
 // All Syslog 
 // Last 100 Syslog. 
@@ -736,7 +736,7 @@ Syslog
 
 ### Edit Azure Monitoring Dashboard
 
-We've pinned some panels to the dashboard before. View and edit those to have a - nice looking and easy to monitor resoruces - dashboard.
+We've pinned some panels to the dashboard before. View and edit those to have a - nice looking and easy to monitor resources - dashboard.
 
 1. Go to **Azure Portal** home page left side menu **Dashboard** and select your dashboard.
 2. Modify the panels here.
