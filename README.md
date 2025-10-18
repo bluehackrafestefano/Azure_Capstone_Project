@@ -543,7 +543,7 @@ Location: https://grafana.clarusway.us/
 
 ---
 
-## 🔑 Entra ID (Azure Active Directory) Integration for Grafana
+## 🔑 Entra ID Integration for Grafana
 
 For the details of this section, refer to [configure Grafana authentication](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/azuread/)
 
