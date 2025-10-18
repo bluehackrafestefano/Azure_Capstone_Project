@@ -55,7 +55,7 @@ This setup can be extended to a multi-tenant “Grafana as a Service”.
 
 ## ✅ Expected Outcomes
 Participants will:
-- Deploy Grafana backed by PostgreSQL Flexible Server  
+- Deploy Grafana backed by PostgreSQL  
 - Implement secure and scalable VMSS + App Gateway  
 - Integrate NAT Gateway, Bastion, and Storage Accounts  
 - Learn observability via Azure Monitor  
@@ -107,7 +107,7 @@ Before deploying VMs, databases, and Grafana, we first build the networking foun
 - First, create the NSG. And then add inbound rules.
 
 #### Database Subnet NSG (`db-subnet-sg`)
-- **Purpose:** Enable access to PostgreSQL Flexible Server from VMs.  
+- **Purpose:** Enable access to PostgreSQL from VMs.  
 - **Rules:**
   - ✅ Allow inbound **5432 (PostgreSQL)** only from the IP range of `app-subnet` (10.0.2.0/24)
     - Source: IP Addresses
