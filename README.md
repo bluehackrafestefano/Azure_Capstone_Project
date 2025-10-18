@@ -763,8 +763,14 @@ We've pinned some panels to the dashboard before. View and edit those to have a 
 
 ---
 
-## Cleanup
+### 🧹 **Cleanup**
 
-Delete the resource group.
+Once you’re done experimenting, tidy up your environment to avoid unnecessary costs:
+
+1. 🗑️ **Delete** the resource group **`grafana-rg`**.  
+2. 🔐 **Remove** the **Entra ID** app registration.  
+3. 🌐 **Delete** the **AWS Route 53** DNS record that points to your **Application Gateway public IP**.
 
 ---
+
+✨ **Happy coding!** 🚀
