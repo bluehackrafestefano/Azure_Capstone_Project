@@ -1,0 +1,74 @@
+#cloud-config
+package_upgrade: true
+
+runcmd:
+  # Add Grafana APT repository
+  - set -e
+  - wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+  - echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+
+  # Update and install packages
+  - apt-get update -y
+  - apt-get install -y grafana nginx
+
+  # Configure Grafana for reverse proxy behind Azure Application Gateway
+  - |
+    cat << 'EOF' > /etc/grafana/grafana.ini
+    [server]
+    protocol = http
+    http_port = 3000
+    domain = grafana.clarusway.us
+    root_url = https://grafana.clarusway.us/
+    serve_from_sub_path = true
+
+    [database]
+    type = postgres
+    host = 10.0.3.4:5432
+    name = grafana
+    user = grafana_user
+    password = "GrafanaP@ss123!"
+    ssl_mode = disable
+
+    ;[auth.azuread]
+    ;name = AzureAD
+    ;enabled = true
+    ;allow_sign_up = true
+    ;client_id = <Application (client) ID>
+    ;client_secret = <Client Secret>
+    ;scopes = openid email profile
+    ;auth_url = https://login.microsoftonline.com/<Tenant ID>/oauth2/v2.0/authorize
+    ;token_url = https://login.microsoftonline.com/<Tenant ID>/oauth2/v2.0/token
+    EOF
+
+  # Enable and start Grafana service
+  - systemctl daemon-reload
+  - systemctl enable grafana-server
+  - systemctl restart grafana-server
+
+  # Configure Nginx as a reverse proxy (HTTP only)
+  - rm -f /etc/nginx/sites-enabled/default
+  - |
+    cat << 'EOF' > /etc/nginx/sites-available/grafana
+    server {
+        listen 80;
+        server_name _;
+
+        location / {
+            proxy_pass http://127.0.0.1:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+    }
+    EOF
+
+  # Enable Nginx configuration
+  - ln -s /etc/nginx/sites-available/grafana /etc/nginx/sites-enabled/grafana
+  - nginx -t
+  - systemctl restart nginx
+  - systemctl enable nginx

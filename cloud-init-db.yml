@@ -1,0 +1,36 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - wget
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+runcmd:
+  - set -e
+  - |
+    if [ ! -f /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc ]; then
+      mkdir -p /usr/share/postgresql-common/pgdg
+      wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+      echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    fi
+  - apt update -y
+  - DEBIAN_FRONTEND=noninteractive apt install -y postgresql-16 postgresql-contrib
+  - systemctl enable --now postgresql
+  - su - postgres -c "psql -c \"ALTER USER postgres WITH PASSWORD 'ip5(B60z3!hr';\""
+  - sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/postgresql/16/main/postgresql.conf
+  - sh -c 'echo "host    all             all             10.0.0.0/24           md5" >> /etc/postgresql/16/main/pg_hba.conf'
+  - sh -c 'echo "host    all             all             10.0.2.0/24           md5" >> /etc/postgresql/16/main/pg_hba.conf'
+  - sh -c 'echo "host    all             all             10.0.3.0/24           md5" >> /etc/postgresql/16/main/pg_hba.conf'
+  - systemctl restart postgresql
+  - su - postgres -c "psql -c \"CREATE USER grafana_user WITH PASSWORD 'GrafanaP@ss123!';\""
+  - su - postgres -c "psql -c \"CREATE DATABASE grafana WITH OWNER grafana_user;\""
+  - su - postgres -c "psql -d grafana -c \"ALTER SCHEMA public OWNER TO grafana_user;\""
+  - su - postgres -c "psql -d grafana -c \"GRANT ALL ON SCHEMA public TO grafana_user;\""
+  - su - postgres -c "psql -d grafana -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO grafana_user;\""
+  - su - postgres -c "psql -d grafana -c \"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO grafana_user;\""
+  - su - postgres -c "psql -c \"\\l\""
+
+final_message: "PostgreSQL 16 with grafana_user and grafana DB configured successfully on Ubuntu 24.04."
