@@ -763,7 +763,7 @@ We've pinned some panels to the dashboard before. View and edit those to have a 
 
 ---
 
-### 🧹 **Cleanup**
+## 🧹 **Cleanup**
 
 Once you’re done experimenting, tidy up your environment to avoid unnecessary costs:
 
