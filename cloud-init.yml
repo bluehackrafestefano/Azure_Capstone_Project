@@ -23,7 +23,7 @@ runcmd:
 
     [database]
     type = postgres
-    host = 10.0.3.4:5432
+    host = <db-vm-private-ip>:5432
     name = grafana
     user = grafana_user
     password = "GrafanaP@ss123!"
